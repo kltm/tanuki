@@ -1,4 +1,6 @@
-tanuki
-======
+* tanuki
+  A novelty seeking crawler for web-based applications.
 
-A novelty seeking crawler for web-based applications.
+  Currently migrating from SF.net, where it lived under the old the
+  geneontology repository. All development and fixes should now take
+  place here.
