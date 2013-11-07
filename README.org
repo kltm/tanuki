@@ -4,3 +4,24 @@
   Currently migrating from SF.net, where it lived under the old the
   geneontology repository. All development and fixes should now take
   place here.
+** Basic usage
+*** Local requirements
+    Operation of Tanuki assumes access to a Postgres database, a la:
+    Assuming good access for user:
+    createdb -h localhost -U tanuki_user -W tanuki
+    Access:
+    psql -W -U tanuki_user -h localhost tanuki
+*** Starting
+    (require 'tanuki)
+    (in-package :tanuki)
+    (defparameter +t+ (make-tanuki-system :start-url "http://localhost/" :data-location "/tmp" :dbname "tanuki" :dbuser "tanuki_user" :dbpass "ABC" :dbhost "localhost"))
+    (initialize-database +t+)
+    ;; Start two agents.
+    (start-a-tanuki +t+ 'get-aset-weighed)
+    (start-a-tanuki +t+ 'get-aset-random)
+    (stop-tanukis)
+*** Continuing    
+    (defparameter +t+ (make-tanuki-system :start-url "http://localhost/" :data-location "/tmp" :dbname "tanuki" :dbuser "tanuki_user" :dbpass "ABC" :dbhost "localhost"))
+    ;; Start one agent.
+    (start-a-tanuki t1 'get-aset-random)
+    (stop-tanukis)
