@@ -105,8 +105,8 @@ others. Option to trim all strings down to minimum size During calculation."
 	 ;; Pull out the maximums.
 	 (a-max (cdr (car mm-list)))
 	 (good-list (remove-if (lambda (x) (not (eq a-max (cdr x)))) mm-list)))
-    ;; Select a random one,
-    (car (random-elt good-list))))
+    ;; Select a random one, nil if there is nothing there.
+    (if good-list (car (random-elt good-list)) nil)))
 
 ;; TODO: Move these elsewhere.
 ;; ;;;
