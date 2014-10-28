@@ -242,6 +242,36 @@ number of unvisited URLs."
      (%report-plists qlist))))
 
 ;;;
+;;; REPL data queries.
+;;; For when we need more examination than a report.
+;;;
+
+(defmethod get-external-pages ((ts tanuki-system))
+  (with-db-from +t+
+    (table-plist 'page  (:= 'internal 0))))
+
+(defmethod get-external-hosts ((ts tanuki-system))
+  (let ((host-list (mapcar #'(lambda (x)
+			       (puri:uri-host (puri:parse-uri (getf x :url))))
+			   (get-external-pages +t+))))
+    (remove-duplicates host-list :test #'equal)))
+
+;(with-db-from +t+ (tanuki-db-op::table-plist 'page  (:and (:like 'url "%beta%") (:= 'internal 0))))
+; 232 1004
+;; 
+(defmethod get-references-with-page-like ((ts tanuki-system) str)
+  (with-db-from +t+
+    (remove-duplicates
+     (alexandria:flatten
+      (query (:select 'argument-set.reference
+		      :from 'argument-set
+		      :inner-join 'page
+		      :on (:= 'argument-set.page-id
+			      'page.id)
+		      :where (:like 'page.url (d2d:ccat "%" str "%")))))
+     :test #'equal)))
+
+;;;
 ;;; Internal functions for target selection.
 ;;;
 
