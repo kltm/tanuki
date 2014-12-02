@@ -22,6 +22,7 @@
    :clean-url
    :base-url
    :user-agent
+   :original-url
    :current-url
    :errors
    :content
