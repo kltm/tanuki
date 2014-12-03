@@ -21,6 +21,7 @@
    :hit
    :comment
    :message
+   :original
    :reference
    ;; Slots.
    :start
@@ -32,6 +33,7 @@
    :page-id
    :raw-url
    :clean-url
+   :original
    :reference
    :request-method
    :request-type
@@ -60,16 +62,16 @@
 ;;; Schema.
 ;;;
 
-(defvar *tables* '(meta page argument argument-set hit comment message reference)
+(defvar *tables* '(meta page argument argument-set hit comment message original reference)
   "All the tables that are used in Tanuki's database.")
-(defvar *sequences* '(page-id-seq argument-id-seq argument-set-id-seq hit-id-seq comment-id-seq message-id-seq reference-id-seq)
+(defvar *sequences* '(page-id-seq argument-id-seq argument-set-id-seq hit-id-seq comment-id-seq message-id-seq original-id-seq reference-id-seq)
   "All the sequences that are used in Tanuki's database.")
 
 ;; TODO/BUG/DEBUG: You don't know this, you don't see this.
 (defun %reset-lists ()
   "You don't know this, you don't see this." 
-  (setf *tables* '(meta page argument argument-set hit comment message reference))
-  (setf *sequences* '(page-id-seq argument-id-seq argument-set-id-seq hit-id-seq comment-id-seq message-id-seq reference-id-seq))
+  (setf *tables* '(meta page argument argument-set hit comment message original reference))
+  (setf *sequences* '(page-id-seq argument-id-seq argument-set-id-seq hit-id-seq comment-id-seq message-id-seq original-id-seq reference-id-seq))
   t)
 
 ;; (dao-table-definition 'meta) looks correct...
@@ -130,13 +132,20 @@
     :initform :null
     :initarg :clean-url
     :documentation "The raw URL cleaned and with an ordered query, if any.")
+   (original
+    :accessor original
+    :col-type (or db-null string)
+    :col-default :null
+    :initform :null
+    :initarg :original
+    :documentation "URL where this argument set was discovered, before redirect.")
    (reference
     :accessor reference
     :col-type (or db-null string)
     :col-default :null
     :initform :null
     :initarg :reference
-    :documentation "URL where this argument set was discovered.")
+    :documentation "URL where this argument set was discovered, after redirect.")
    (request-method
     :accessor request-method
     :col-type (or db-null string)
@@ -176,10 +185,6 @@
     :accessor argument-set-id
     :col-type bigint
     :initarg :argument-set-id)
-   ;; (reference-id
-   ;;  :accessor argument-set-id
-   ;;  :col-type bigint
-   ;;  :initarg :argument-set-id)
    (name
     :accessor name
     :col-type string
@@ -314,20 +319,34 @@
   (:metaclass dao-class)
   (:keys id))
 
-;; NOTE: Currently unused in favor of just embedding it in
-;; argument-set.
-;; (dao-table-definition 'reference) looks correct...
-(defclass reference ()
-  ((id
-    :accessor id
-    :col-type bigint
-    :initarg :id)
-   (url
-    :accessor url
-    :col-type (or db-null string)
-    :col-default :null
-    :initform :null
-    :initarg :url
-    :documentation "..."))
-  (:metaclass dao-class)
-  (:keys id))
+;; ;; NOTE: Currently unused in favor of just embedding them in
+;; ;; argument-set.
+;; ;; (dao-table-definition 'reference) looks correct...
+;; (defclass original ()
+;;   ((id
+;;     :accessor id
+;;     :col-type bigint
+;;     :initarg :id)
+;;    (url
+;;     :accessor url
+;;     :col-type (or db-null string)
+;;     :col-default :null
+;;     :initform :null
+;;     :initarg :url
+;;     :documentation "..."))
+;;   (:metaclass dao-class)
+;;   (:keys id))
+;; (defclass reference ()
+;;   ((id
+;;     :accessor id
+;;     :col-type bigint
+;;     :initarg :id)
+;;    (url
+;;     :accessor url
+;;     :col-type (or db-null string)
+;;     :col-default :null
+;;     :initform :null
+;;     :initarg :url
+;;     :documentation "..."))
+;;   (:metaclass dao-class)
+;;   (:keys id))

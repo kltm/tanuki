@@ -187,6 +187,7 @@ number of unvisited URLs."
      (format t "Started at: ~a~%" start)
      (format t "Known external pages: ~a~%" external-page-count)
      (format t "Known internal pages: ~a~%" internal-page-count)
+     (format t "Known redirected pages: ~a~%" (length (get-redirect-pages ts)))
      (format t "Collected argument sets: ~a~%" aset-count)
      (format t "Attempted page visits: ~a~%" hit-count)
      (format t "Total good pages: ~a~%" good-count)
@@ -207,7 +208,11 @@ number of unvisited URLs."
       (format t "Code: ~a~%" (getf q :code))
       (format t "Success: ~a~%" (getf q :success))
       (format t "Flagged: ~a~%" (getf q :flagged))
-      (format t "Reference: ~a~%" (getf q :reference))
+      (let ((orig (getf q :original))
+	    (refe (getf q :reference)))
+	(if (not (string= orig refe))
+	    (format t "Original: ~a~%" orig))
+	(format t "Reference: ~a~%" refe))
       (format t "URL: ~a~%" (getf q :clean-url)))
     count))
 
@@ -247,20 +252,20 @@ number of unvisited URLs."
 ;;;
 
 (defmethod get-external-pages ((ts tanuki-system))
-  (with-db-from +t+
+  (with-db-from ts
     (table-plist 'page  (:= 'internal 0))))
 
 (defmethod get-external-hosts ((ts tanuki-system))
   (let ((host-list (mapcar #'(lambda (x)
 			       (puri:uri-host (puri:parse-uri (getf x :url))))
-			   (get-external-pages +t+))))
+			   (get-external-pages ts))))
     (remove-duplicates host-list :test #'equal)))
 
 ;(with-db-from +t+ (tanuki-db-op::table-plist 'page  (:and (:like 'url "%beta%") (:= 'internal 0))))
 ; 232 1004
 ;; 
 (defmethod get-references-with-page-like ((ts tanuki-system) str)
-  (with-db-from +t+
+  (with-db-from ts
     (remove-duplicates
      (alexandria:flatten
       (query (:select 'argument-set.reference
@@ -270,6 +275,44 @@ number of unvisited URLs."
 			      'page.id)
 		      :where (:like 'page.url (d2d:ccat "%" str "%")))))
      :test #'equal)))
+
+;; Get all page ids that seem to have a redirect.
+(defmethod get-redirect-pages ((ts tanuki-system))
+  (with-db-from ts
+    (remove-duplicates
+     (alexandria:flatten
+      (query (:select 'page.id
+		      :from 'page
+		      :inner-join 'argument-set
+		      :on (:= 'page.id 'argument-set.page-id)
+		      :where (:!= 'argument-set.reference
+				  'argument-set.original))))
+     :test #'equal)))
+
+;; TODO: Unnecessary?
+;; (defmethod get-direct-pages ((ts tanuki-system))
+;;   (with-db-from ts
+;;     (remove-duplicates
+;;      (alexandria:flatten
+;;       (query (:select 'page.id
+;; 		      :from 'page
+;; 		      :inner-join 'argument-set
+;; 		      :on (:= 'page.id 'argument-set.page-id)
+;; 		      :where (:= 'argument-set.reference
+;; 				 'argument-set.original))))
+;;      :test #'equal)))
+
+;; TODO: Unnecessary?
+;; (defmethod get-redirect-argument-sets ((ts tanuki-system))
+;;   (with-db-from ts
+;;     (remove-duplicates
+;;      (alexandria:flatten
+;;       (query (:select 'argument-set.id ;'argument-set.reference 
+;; 		      :from 'argument-set
+;; 		      :inner-join 'page
+;; 		      :on (:= 'argument-set.page-id 'page.id)
+;; 		      :where (:!= 'argument-set.reference 'argument-set.original))))
+;;      :test #'equal)))
 
 ;;;
 ;;; Internal functions for target selection.
@@ -513,6 +556,7 @@ necessary."
                                           :page-id curr-page-id
                                           :raw-url raw-url
                                           :clean-url clean-url
+                                          :original (original-url agent)
                                           :reference (current-url agent)
                                           :request-method "GET"
                                           :request-type "link"
