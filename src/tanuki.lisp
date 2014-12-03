@@ -281,7 +281,7 @@ number of unvisited URLs."
   (with-db-from ts
     (remove-duplicates
      (alexandria:flatten
-      (query (:select 'page.id
+      (query (:select 'page.url
 		      :from 'page
 		      :inner-join 'argument-set
 		      :on (:= 'page.id 'argument-set.page-id)
