@@ -62,16 +62,16 @@
 ;;; Schema.
 ;;;
 
-(defvar *tables* '(meta page argument argument-set hit comment message original reference)
+(defvar *tables* '(meta page argument argument-set hit comment message)
   "All the tables that are used in Tanuki's database.")
-(defvar *sequences* '(page-id-seq argument-id-seq argument-set-id-seq hit-id-seq comment-id-seq message-id-seq original-id-seq reference-id-seq)
+(defvar *sequences* '(page-id-seq argument-id-seq argument-set-id-seq hit-id-seq comment-id-seq message-id-seq)
   "All the sequences that are used in Tanuki's database.")
 
 ;; TODO/BUG/DEBUG: You don't know this, you don't see this.
 (defun %reset-lists ()
   "You don't know this, you don't see this." 
-  (setf *tables* '(meta page argument argument-set hit comment message original reference))
-  (setf *sequences* '(page-id-seq argument-id-seq argument-set-id-seq hit-id-seq comment-id-seq message-id-seq original-id-seq reference-id-seq))
+  (setf *tables* '(meta page argument argument-set hit comment message))
+  (setf *sequences* '(page-id-seq argument-id-seq argument-set-id-seq hit-id-seq comment-id-seq message-id-seq))
   t)
 
 ;; (dao-table-definition 'meta) looks correct...

@@ -178,6 +178,7 @@ number of unvisited URLs."
          (internal-page-count (row-count 'page (:= 'internal 1)))
          (aset-count (row-count 'argument-set))
          (hit-count (row-count 'hit))
+	 (hit-wait-list (mapcar #'(lambda (x) (cadr x)) (get-hit-times ts)))
          (good-count (row-count 'hit (:and (:= 0 'flagged) (:= 1 'success))))
          (n-flagged (row-count 'hit (:and (:= 1 'flagged) (:= 1 'success))))
          (n-error (row-count 'hit (:and (:= 1 'flagged) (:= 0 'success))))
@@ -185,6 +186,15 @@ number of unvisited URLs."
      (format t "Current Tanuki status:~%")
      (format t "Base URL: ~a~%" target)
      (format t "Started at: ~a~%" start)
+     (format t "Waiting: ~,2F (avg); ~a (max); ~a (min)~%"
+	     (if (not hit-wait-list) 0 
+		 (+ 0.0 ; decimalize
+		    (/ (loop for x in hit-wait-list sum x)
+		       (length hit-wait-list))))
+	     (if (not hit-wait-list) 0 
+		 (apply #'max hit-wait-list))
+	     (if (not hit-wait-list) 0 
+		 (apply #'min hit-wait-list)))
      (format t "Known external pages: ~a~%" external-page-count)
      (format t "Known internal pages: ~a~%" internal-page-count)
      (format t "Known redirected pages: ~a~%" (length (get-redirect-pages ts)))
@@ -288,6 +298,18 @@ number of unvisited URLs."
 		      :where (:!= 'argument-set.reference
 				  'argument-set.original))))
      :test #'equal)))
+
+(defmethod get-hit-times ((ts tanuki-system))
+      (with-db-from ts
+	(query (:order-by
+		(:select 'page.url 'hit.wait
+			 :from 'hit
+			 :inner-join 'argument-set
+			 :on (:= 'hit.argument-set-id 'argument-set.id)
+			 :inner-join 'page 
+			 :on (:= 'argument-set.page-id 'page.id)
+			 :where (:= 'hit.success 1))
+		'hit.wait))))
 
 ;; TODO: Unnecessary?
 ;; (defmethod get-direct-pages ((ts tanuki-system))
@@ -487,47 +509,46 @@ database."
                             (tanuki-schema:clean-url aset)))
    (when aset
      (update-dao-value aset 'tanuki-schema:todo 0) ; aset is now off todo list
-     (let ((run-timer (make-instance 'd2d:timer)))
-       (fetch agent (tanuki-schema:clean-url aset))
-       ;; Create the best hit we can at the moment...
-       (let* ((ret-code (if (null (code agent)) :null (code agent)))
-              (new-hit (make-instance 'tanuki-schema:hit
-                                      :id (sequence-next 'hit-id-seq)
-                                      :argument-set-id (tanuki-schema:id aset)
-                                      :wait (d2d:seconds run-timer)
-                                      :date (d2d:timestamp)
-                                      :agent (user-agent agent)
-                                      :code ret-code)))
-         (insert-dao new-hit)
-         ;; Toggle success and flagged depending on what happened with
-         ;; the agent.
-         (labels ((toggles (hit-dao success-int flagged-int)
-                           (update-dao-value hit-dao
-                                             'tanuki-schema:success
-                                             success-int)
-                           (update-dao-value hit-dao
-                                             'tanuki-schema:flagged
-                                             flagged-int)))
-           ;; 
-           (cond
-            ((and (null (errors agent)) (is-code-ok-p agent))
-             (toggles new-hit 1 0))
-            ((null (errors agent))
-             (toggles new-hit 1 1))
-            (t (toggles new-hit 0 1))))
-         ;; Add errors/comments to the database if any.
-         (dolist (e (errors agent))
-           ;;(break "3" (tanuki-schema:id new-hit))
-           (let ((new-comment (make-instance 'tanuki-schema:comment
-                                             :id (sequence-next
-                                                  'comment-id-seq)
-                                             :hit-id (tanuki-schema:id new-hit)
-                                             :comment-type "error"
-                                             :text e)))
-             (insert-dao new-comment))))
-       ;; Only add links (spider forward) when it is an internal link.
-       (when (is-internal-p agent (current-url agent))
-         (process-agent ts agent))))))
+     (fetch agent (tanuki-schema:clean-url aset))
+     ;; Create the best hit we can at the moment...
+     (let* ((ret-code (if (null (code agent)) :null (code agent)))
+	    (new-hit (make-instance 'tanuki-schema:hit
+				    :id (sequence-next 'hit-id-seq)
+				    :argument-set-id (tanuki-schema:id aset)
+				    :wait (wait agent)
+				    :date (d2d:timestamp)
+				    :agent (user-agent agent)
+				    :code ret-code)))
+       (insert-dao new-hit)
+       ;; Toggle success and flagged depending on what happened with
+       ;; the agent.
+       (labels ((toggles (hit-dao success-int flagged-int)
+		  (update-dao-value hit-dao
+				    'tanuki-schema:success
+				    success-int)
+		  (update-dao-value hit-dao
+				    'tanuki-schema:flagged
+				    flagged-int)))
+	 ;; 
+	 (cond
+	   ((and (null (errors agent)) (is-code-ok-p agent))
+	    (toggles new-hit 1 0))
+	   ((null (errors agent))
+	    (toggles new-hit 1 1))
+	   (t (toggles new-hit 0 1))))
+       ;; Add errors/comments to the database if any.
+       (dolist (e (errors agent))
+	 ;;(break "3" (tanuki-schema:id new-hit))
+	 (let ((new-comment (make-instance 'tanuki-schema:comment
+					   :id (sequence-next
+						'comment-id-seq)
+					   :hit-id (tanuki-schema:id new-hit)
+					   :comment-type "error"
+					   :text e)))
+	   (insert-dao new-comment))))
+     ;; Only add links (spider forward) when it is an internal link.
+     (when (is-internal-p agent (current-url agent))
+       (process-agent ts agent)))))
 
 (defmethod process-agent ((ts tanuki-system) agent)
   "Take the contents of an agent and add it to the database as

@@ -27,6 +27,7 @@
    :errors
    :content
    :code
+   :wait
    :links
    ;; Super methods.
    :fetch
