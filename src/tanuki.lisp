@@ -311,30 +311,24 @@ number of unvisited URLs."
 			 :where (:= 'hit.success 1))
 		'hit.wait))))
 
-;; TODO: Unnecessary?
-;; (defmethod get-direct-pages ((ts tanuki-system))
-;;   (with-db-from ts
-;;     (remove-duplicates
-;;      (alexandria:flatten
-;;       (query (:select 'page.id
-;; 		      :from 'page
-;; 		      :inner-join 'argument-set
-;; 		      :on (:= 'page.id 'argument-set.page-id)
-;; 		      :where (:= 'argument-set.reference
-;; 				 'argument-set.original))))
-;;      :test #'equal)))
-
-;; TODO: Unnecessary?
-;; (defmethod get-redirect-argument-sets ((ts tanuki-system))
-;;   (with-db-from ts
-;;     (remove-duplicates
-;;      (alexandria:flatten
-;;       (query (:select 'argument-set.id ;'argument-set.reference 
-;; 		      :from 'argument-set
-;; 		      :inner-join 'page
-;; 		      :on (:= 'argument-set.page-id 'page.id)
-;; 		      :where (:!= 'argument-set.reference 'argument-set.original))))
-;;      :test #'equal)))
+;; Visualization.
+;; BUG/NOTE: The adw-charting seems to be no longer support ed and/or
+;; stunningly poorly documented--some of the arguments in #'set-axis
+;; (or possible the set-axis statements in the macro body) were
+;; /required/ to make it function at all (issues around :draw-zero-p).
+;; Is there another lib to use?
+;; (defmethod dump-time-graph ((ts tanuki-system))
+;;   (let ((htimes (mapcar #'(lambda (x) (cadr x)) (reverse (get-hit-times ts))))
+;; 	(acc '()))
+;;     ;; Group hit second time counts.
+;;     (loop for n in (remove-duplicates htimes)
+;;        do (setf acc (cons (list n (count n htimes)) acc)))
+;;     ;; Use adw-charting.
+;;     (with-chart (:bar 800 600)
+;;       (add-series "hits @" acc)
+;;       (set-axis :x "seconds" :data-interval 1 :draw-zero-p t)
+;;       (set-axis :y "# hits" :data-interval 1 :draw-zero-p t)
+;;       (save-file "/tmp/tanuki-hit-timings.png"))))
 
 ;;;
 ;;; Internal functions for target selection.
