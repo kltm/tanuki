@@ -18,7 +18,7 @@
     #+BEGIN_SRC common-lisp
     (require :tanuki)
     (in-package :tanuki)
-    (defparameter +t+ (make-tanuki-system :start-url "http://stage.monarchinitiative.org/" :data-location "/tmp" :dbname "tanuki" :dbuser "XYZ" :dbpass "ABC" :dbhost "localhost"))
+    (defparameter +t+ (make-tanuki-system :start-url "http://localhost/" :data-location "/tmp" :dbname "tanuki" :dbuser "XYZ" :dbpass "ABC" :dbhost "localhost"))
     ;; Build database from scratch, or wipe everything out.
     (initialize-database +t+)
     ;; Start two agents.
@@ -31,7 +31,7 @@
 *** Continuing
     A session, continuing from last time.
     #+BEGIN_SRC common-lisp
-    (defparameter +t+ (make-tanuki-system :start-url "http://stage.monarchinitiative.org/" :data-location "/tmp" :dbname "tanuki" :dbuser "XYZ" :dbpass "ABC" :dbhost "localhost"))
+    (defparameter +t+ (make-tanuki-system :start-url "http://localhost/" :data-location "/tmp" :dbname "tanuki" :dbuser "XYZ" :dbpass "ABC" :dbhost "localhost"))
     ;; Start one agent.
     (start-a-tanuki t1 'get-aset-random)
     (stop-tanukis +t+)
