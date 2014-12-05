@@ -1,9 +1,9 @@
-* tanuki
-  A novelty seeking crawler for web-based applications.
+* Tanuki
+  A novelty seeking crawler and link/wait reporting tool for web-based
+  applications.
 
-  Currently migrating from SF.net, where it lived under the old the
-  geneontology repository. All development and fixes should now take
-  place here.
+  It is based on the [[https://github.com/kltm/kappa][kappa]] web agent, which is itself based on the wonderful
+  [[http://www.weitz.de/drakma/][drakma]].
 ** Basic usage
 *** Local requirements
     Operation of Tanuki assumes access to a Postgres database, a la:
