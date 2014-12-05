@@ -8,20 +8,31 @@
 *** Local requirements
     Operation of Tanuki assumes access to a Postgres database, a la:
     Assuming good access for user:
+    #+BEGIN_SRC
     createdb -h localhost -U tanuki_user -W tanuki
     Access:
     psql -W -U tanuki_user -h localhost tanuki
+    #+END_SRC
 *** Starting
-    (require 'tanuki)
+    A session, starting from scratch.
+    #+BEGIN_SRC common-lisp
+    (require :tanuki)
     (in-package :tanuki)
-    (defparameter +t+ (make-tanuki-system :start-url "http://localhost/" :data-location "/tmp" :dbname "tanuki" :dbuser "tanuki_user" :dbpass "ABC" :dbhost "localhost"))
+    (defparameter +t+ (make-tanuki-system :start-url "http://stage.monarchinitiative.org/" :data-location "/tmp" :dbname "tanuki" :dbuser "XYZ" :dbpass "ABC" :dbhost "localhost"))
+    ;; Build database from scratch, or wipe everything out.
     (initialize-database +t+)
     ;; Start two agents.
     (start-a-tanuki +t+ 'get-aset-weighed)
-    (start-a-tanuki +t+ 'get-aset-random)
-    (stop-tanukis)
-*** Continuing    
-    (defparameter +t+ (make-tanuki-system :start-url "http://localhost/" :data-location "/tmp" :dbname "tanuki" :dbuser "tanuki_user" :dbpass "ABC" :dbhost "localhost"))
+    (report-general +t+)
+    (start-a-tanuki +t+ 'get-distant-aset-random)
+    (report-general +t+)
+    (stop-tanukis +t+)
+    #+END_SRC
+*** Continuing
+    A session, continuing from last time.
+    #+BEGIN_SRC common-lisp
+    (defparameter +t+ (make-tanuki-system :start-url "http://stage.monarchinitiative.org/" :data-location "/tmp" :dbname "tanuki" :dbuser "XYZ" :dbpass "ABC" :dbhost "localhost"))
     ;; Start one agent.
     (start-a-tanuki t1 'get-aset-random)
-    (stop-tanukis)
+    (stop-tanukis +t+)
+    #+END_SRC
