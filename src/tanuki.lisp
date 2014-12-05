@@ -186,7 +186,7 @@ number of unvisited URLs."
      (format t "Current Tanuki status:~%")
      (format t "Base URL: ~a~%" target)
      (format t "Started at: ~a~%" start)
-     (format t "Waiting: ~,2F (avg); ~a (max); ~a (min)~%"
+     (format t "Waiting: ~,2Fs (avg); ~as (max); ~as (min)~%"
 	     (if (not hit-wait-list) 0 
 		 (+ 0.0 ; decimalize
 		    (/ (loop for x in hit-wait-list sum x)
