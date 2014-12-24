@@ -205,19 +205,21 @@ number of unvisited URLs."
      (format t "Total error pages: ~a~%" n-error)
      (format t "Total odd pages: ~a~%" odd-count))))
   
-(defun %report-plists (qlist)
+;;(defun %report-plists (qlist &key (min-p nil min-p-supplied-p))
+(defun %report-plists (qlist &key (min-p nil))
   (let ((count 0))
     (dolist (q qlist)
       (incf count)
       (format t "~%")
-      (format t "Generic ID: ~a~%" (getf q :id))
-      (format t "Argument set ID: ~a~%" (getf q :argument-set-id))
-      (format t "Page ID: ~a~%" (getf q :page-id))
-      (format t "Date: ~a~%" (d2d:humanstamp (getf q :date)))
-      (format t "Processing time: ~a~%" (getf q :wait))
-      (format t "Code: ~a~%" (getf q :code))
-      (format t "Success: ~a~%" (getf q :success))
-      (format t "Flagged: ~a~%" (getf q :flagged))
+      (when (not min-p)
+	(format t "Generic ID: ~a~%" (getf q :id))
+	(format t "Argument set ID: ~a~%" (getf q :argument-set-id))
+	(format t "Page ID: ~a~%" (getf q :page-id))
+	(format t "Date: ~a~%" (d2d:humanstamp (getf q :date)))
+	(format t "Processing time: ~a~%" (getf q :wait))
+	(format t "Code: ~a~%" (getf q :code))
+	(format t "Success: ~a~%" (getf q :success))
+	(format t "Flagged: ~a~%" (getf q :flagged)))
       (let ((orig (getf q :original))
 	    (refe (getf q :reference)))
 	(if (not (string= orig refe))
@@ -226,35 +228,35 @@ number of unvisited URLs."
       (format t "URL: ~a~%" (getf q :clean-url)))
     count))
 
-(defmethod report-error ((ts tanuki-system))
+(defmethod report-error ((ts tanuki-system) &key (min-p nil))
   "Give a report about all of the sets with an \"error\" (non-success) hit."
   (with-db-from ts
-   (let ((qlist (query (:select '* :from 'hit
-                                :inner-join 'argument-set
-                                :on (:= 'hit.argument-set-id 'argument-set.id)
-                                :where (:and (:= 'hit.success 0)
-                                             (:= 'hit.flagged 1)))
-                       :plists)))
-     (%report-plists qlist))))
- 
-(defmethod report-flagged ((ts tanuki-system))
+    (let ((qlist (query (:select '* :from 'hit
+				 :inner-join 'argument-set
+				 :on (:= 'hit.argument-set-id 'argument-set.id)
+				 :where (:and (:= 'hit.success 0)
+					      (:= 'hit.flagged 1)))
+			:plists)))
+      (%report-plists qlist :min-p min-p))))
+
+(defmethod report-flagged ((ts tanuki-system) &key (min-p nil))
   "Give a report about all of the sets with a \"flagged\" hit."
   (with-db-from ts
-   (let ((qlist (query (:select '* :from 'hit
-                                :inner-join 'argument-set
-                                :on (:= 'hit.argument-set-id 'argument-set.id)
-                                :where (:and (:= 'hit.success 1)
-                                             (:= 'hit.flagged 1)))
-                       :plists)))
-     (%report-plists qlist))))
+    (let ((qlist (query (:select '* :from 'hit
+				 :inner-join 'argument-set
+				 :on (:= 'hit.argument-set-id 'argument-set.id)
+				 :where (:and (:= 'hit.success 1)
+					      (:= 'hit.flagged 1)))
+			:plists)))
+      (%report-plists qlist :min-p min-p))))
 
-(defmethod report-marked ((ts tanuki-system))
+(defmethod report-marked ((ts tanuki-system) &key (min-p nil))
   "Give a report about all of the sets with a \"mark\"."
   (with-db-from ts
    (let ((qlist (query (:select '* :from 'argument-set
                                 :where (:= 'argument-set.mark 1))
                        :plists)))
-     (%report-plists qlist))))
+     (%report-plists qlist :min-p min-p))))
 
 ;;;
 ;;; REPL data queries.
@@ -654,3 +656,18 @@ database."
         (link (make-link url)))
     (fetch agent (clean-url link))
     (process-agent ts agent)))
+
+;; Should be in kappa somewhere.
+;; ;;;
+;; ;;; Fun tricks to check the URLs in the YAML.
+;; ;;;
+
+;; (defparameter +urls+
+;;   (remove-duplicates
+;;    (mapcar #'(lambda (x) (string-trim " -" x))
+;; 	   (remove-if #'(lambda (x) (not (cl-ppcre:scan "     \- http" x)))
+;; 		      (d2d:file->lines
+;; 		       "~/local/src/git/go-site/metadata/go-db-xrefs.yaml")))
+;;    :test #'string=))
+
+;; (defparameter +res+ (loop for u in +urls+ collect (let ((agent (make-agent +t+))) (fetch agent u) (format t "~a ~a~%" (code agent) u) (code agent))))
