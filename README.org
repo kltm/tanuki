@@ -1,6 +1,6 @@
 * Tanuki
-  A novelty seeking crawler and link/wait reporting tool for web-based
-  applications.
+  A novelty seeking crawler and link/wait reporting tool for HTML-based
+  web applications.
 
   It is based on the [[https://github.com/kltm/kappa][kappa]] web agent, which is itself based on the wonderful
   [[http://www.weitz.de/drakma/][drakma]].
