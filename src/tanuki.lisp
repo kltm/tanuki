@@ -93,13 +93,13 @@
    (db
     :documentation "The internal database connection."
     :accessor db
-    :initform nil)   
+    :initform nil)
    (sample-size
     :documentation "The size of the random sample in the database for each iteration."
     :accessor sample-size
     :initform 33)
    (sample-truncate
-    :documentation "..." 
+    :documentation "..."
     :accessor sample-truncate
     :initform nil)
    (stop-list
@@ -187,13 +187,13 @@ number of unvisited URLs."
      (format t "Base URL: ~a~%" target)
      (format t "Started at: ~a~%" start)
      (format t "Waiting: ~,2Fs (avg); ~as (max); ~as (min)~%"
-	     (if (not hit-wait-list) 0 
+	     (if (not hit-wait-list) 0
 		 (+ 0.0 ; decimalize
 		    (/ (loop for x in hit-wait-list sum x)
 		       (length hit-wait-list))))
-	     (if (not hit-wait-list) 0 
+	     (if (not hit-wait-list) 0
 		 (apply #'max hit-wait-list))
-	     (if (not hit-wait-list) 0 
+	     (if (not hit-wait-list) 0
 		 (apply #'min hit-wait-list)))
      (format t "Known external pages: ~a~%" external-page-count)
      (format t "Known internal pages: ~a~%" internal-page-count)
@@ -204,7 +204,7 @@ number of unvisited URLs."
      (format t "Total flagged pages: ~a~%" n-flagged)
      (format t "Total error pages: ~a~%" n-error)
      (format t "Total odd pages: ~a~%" odd-count))))
-  
+
 ;;(defun %report-plists (qlist &key (min-p nil min-p-supplied-p))
 (defun %report-plists (qlist &key (min-p nil))
   (let ((count 0))
@@ -263,6 +263,10 @@ number of unvisited URLs."
 ;;; For when we need more examination than a report.
 ;;;
 
+(defmethod get-internal-pages ((ts tanuki-system))
+  (with-db-from ts
+    (table-plist 'page  (:= 'internal 1))))
+
 (defmethod get-external-pages ((ts tanuki-system))
   (with-db-from ts
     (table-plist 'page  (:= 'internal 0))))
@@ -275,7 +279,7 @@ number of unvisited URLs."
 
 ;(with-db-from +t+ (tanuki-db-op::table-plist 'page  (:and (:like 'url "%beta%") (:= 'internal 0))))
 ; 232 1004
-;; 
+;;
 (defmethod get-references-with-page-like ((ts tanuki-system) str)
   (with-db-from ts
     (remove-duplicates
@@ -308,7 +312,7 @@ number of unvisited URLs."
 			 :from 'hit
 			 :inner-join 'argument-set
 			 :on (:= 'hit.argument-set-id 'argument-set.id)
-			 :inner-join 'page 
+			 :inner-join 'page
 			 :on (:= 'argument-set.page-id 'page.id)
 			 :where (:= 'hit.success 1))
 		'hit.wait))))
@@ -375,7 +379,7 @@ number of unvisited URLs."
 (defmethod distant-undone-argument-set ((ts tanuki-system) deciding-function)
   "For internal use. "
   ;; Get a sample and remove the dupes.
-  (let* ((sample-set 
+  (let* ((sample-set
           (remove-duplicates
            (random-undone-argument-set ts deciding-function
 				       :number-of-sets (sample-size ts))
@@ -525,7 +529,7 @@ database."
 		  (update-dao-value hit-dao
 				    'tanuki-schema:flagged
 				    flagged-int)))
-	 ;; 
+	 ;;
 	 (cond
 	   ((and (null (errors agent)) (is-code-ok-p agent))
 	    (toggles new-hit 1 0))
@@ -600,7 +604,7 @@ necessary."
   "Mark an argument set and remove its hits by argument set id."
   (with-db-from ts
    (let ((aset (parse-argument-set aset?)))
-     (when aset 
+     (when aset
        ;; Mark found aset.
        (update-dao-value aset 'tanuki-schema:mark 1)
        ;; Remove associated hits.
@@ -611,10 +615,10 @@ necessary."
   "Remove hits and set mark (but don't reset todo--hide from running agents)."
   (with-db-from ts
    (let ((success-flag 1) (flagged-flag 0))
-     (cond 
-      ((eq type 'error) 
+     (cond
+      ((eq type 'error)
        (progn (setf success-flag 0) (setf flagged-flag 1)))
-      ((eq type 'flagged) 
+      ((eq type 'flagged)
        (progn (setf success-flag 1) (setf flagged-flag 1)))
       (t (error "need to be either 'error or 'flagged")))
      (with-transaction ()
@@ -629,7 +633,7 @@ necessary."
           ;; Mark found asets (while removing past artifacts).
           (let ((aset (hit->argument-set hit)))
             (mark-argument-set ts aset))))))))
-  
+
 ;; NOTE: No transaction here--nobody should be bothering us...
 (defmethod rerun-marked ((ts tanuki-system))
   "Rerun marked argument sets and unmark them."
