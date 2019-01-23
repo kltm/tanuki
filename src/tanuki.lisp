@@ -258,6 +258,16 @@ number of unvisited URLs."
                        :plists)))
      (%report-plists qlist :min-p min-p))))
 
+(defmethod report-success ((ts tanuki-system) &key (min-p nil))
+  "Give a report about all of the sets with a \"flagged\" hit."
+  (with-db-from ts
+    (let ((qlist (query (:select '* :from 'hit
+				 :inner-join 'argument-set
+				 :on (:= 'hit.argument-set-id 'argument-set.id)
+				 :where (:and (:= 'hit.success 1)))
+			:plists)))
+      (%report-plists qlist :min-p min-p))))
+
 ;;;
 ;;; REPL data queries.
 ;;; For when we need more examination than a report.
@@ -304,6 +314,18 @@ number of unvisited URLs."
 		      :where (:!= 'argument-set.reference
 				  'argument-set.original))))
      :test #'equal)))
+
+
+(defun filter (a b)
+  "Filters out all items in a from b"
+  (if (= 0 (length a)) b
+      (filter (remove (first a) a) (remove (first a) b))))
+
+(defmethod get-internal-undirected-pages ((ts tanuki-system))
+  (let ((internal-list (mapcar #'(lambda (x) (getf x :URL))
+			       (get-internal-pages ts)))
+	(redirected-list (get-redirect-pages ts)))
+    (filter redirected-list internal-list)))
 
 (defmethod get-hit-times ((ts tanuki-system))
       (with-db-from ts
