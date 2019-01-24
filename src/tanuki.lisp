@@ -1,7 +1,8 @@
 ;;;; -*- mode: Lisp -*-
 ;;;;
 ;;;; Assuming good access for user:
-;;;; createdb -h localhost -U tanuki_user -W tanuki
+;;;; (sudo -u postgres createuser -D -A -P tanuki_user)
+;;;; (sudo -u postgres createdb -O tanuki_user tanuki)
 ;;;;
 ;;;; Access:
 ;;;; psql -W -U tanuki_user -h localhost tanuki
