@@ -1,8 +1,0 @@
-http://localhost/cgi-bin/amigo/amigo
-http://localhost/cgi-bin/amigo/sdfgsdfgsdfhgsdhg
-;; not me
-
-   http://localhost/cgi-bin/amigo/go.cgi   
-
-;nope.
-
